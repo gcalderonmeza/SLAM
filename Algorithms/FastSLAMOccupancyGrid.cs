@@ -22,21 +22,19 @@ namespace Algorithms
                 // Sample motion model
                 var xT = this.motionVelocityModel.SampleModel(uT, belief.pose);
 
-                // Sample the measurement model
+                // Sample the measurement model against the CURRENT (pre-update) map
                 double wT = this.measurementModel.BeamRangeFinder(zT, xT, belief.map);
 
-                // Update the map
-                OccupancyGridMap map = belief.map as OccupancyGridMap;
-
-                // UpdateMap creates a new instance of the map with the changes
-                //MapBase mT = map.UpdateMap(xT, zT, sensor: this.measurementModel);
+                // Clone the map before updating so each particle has an independent copy.
+                // Without cloning, particles drawn multiple times during resampling share the
+                // same OccupancyGridMap object: subsequent iterations update it repeatedly and
+                // all copies see the same mutations, destroying particle diversity.
+                OccupancyGridMap map = (OccupancyGridMap)((OccupancyGridMap)belief.map).Clone();
                 map.UpdateMap(xT, zT, sensor: this.measurementModel);
 
-                // Compute a tupple with the beliefe associated to a weight
                 BeliefWeightPair beliefWeightPair = new BeliefWeightPair
                 {
-                    //grid = new BeliefeOccupancyGrid(xT, mT),
-                    grid = new BeliefeOccupancyGrid(pose: xT, map: belief.map, path: belief.path),
+                    grid = new BeliefeOccupancyGrid(pose: xT, map: map, path: belief.path),
                     weight = wT,
                 };
 
