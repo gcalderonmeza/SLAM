@@ -32,11 +32,24 @@ namespace Models
             double wBar = uT.w + sampler(this.alpha3 * v2 + this.alpha4 * w2);
             double gBar = sampler(this.alpha5 * v2 + this.alpha6 * w2);
 
-            double xPrime = xT_1.x - vBar/wBar * (Math.Sin(xT_1.theta) - Math.Sin(xT_1.theta + wBar * dt)); 
-            double yPrime = xT_1.y + vBar/wBar * (Math.Cos(xT_1.theta) - Math.Cos(xT_1.theta + wBar * dt));
-            double thetaPrime = xT_1.theta + (wBar + gBar) * dt;
+            double xPrime, yPrime, thetaPrime;
 
-            // Return x_t (the sample beliefe)
+            if (Math.Abs(wBar) < 1e-6)
+            {
+                // Straight-line limit of the circular-arc formula as w → 0.
+                // Avoids division by zero when the robot moves in (nearly) a straight line.
+                xPrime     = xT_1.x + vBar * dt * Math.Cos(xT_1.theta);
+                yPrime     = xT_1.y + vBar * dt * Math.Sin(xT_1.theta);
+                thetaPrime = xT_1.theta + gBar * dt;
+            }
+            else
+            {
+                xPrime     = xT_1.x - vBar / wBar * (Math.Sin(xT_1.theta) - Math.Sin(xT_1.theta + wBar * dt));
+                yPrime     = xT_1.y + vBar / wBar * (Math.Cos(xT_1.theta) - Math.Cos(xT_1.theta + wBar * dt));
+                thetaPrime = xT_1.theta + (wBar + gBar) * dt;
+            }
+
+            // Return x_t (the sampled belief)
             return new Pose(xPrime, yPrime, thetaPrime);
         }
     }
