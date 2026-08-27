@@ -181,6 +181,141 @@ Sensor range: `5 cm` (minimum) to `255 cm` (maximum, treated as "no obstacle det
 
 ---
 
+## C++ Port (ROS2-ready)
+
+A complete C++ port of the algorithm lives in `cpp/`. It compiles as a standalone library and console runner on Linux (Ubuntu 22.04 / 24.04 with ROS2 Humble/Jazzy). The C# Windows Forms visualizer is replaced by optional OpenCV and native ROS2 RViz2 integration.
+
+### Directory layout
+
+```
+cpp/
+├── CMakeLists.txt
+├── include/slam/
+│   ├── pose.hpp                  # Pose struct (x, y, theta)
+│   ├── grid_cell.hpp             # GridCell + log-odds helpers
+│   ├── occupancy_grid_map.hpp    # 2-D occupancy grid
+│   ├── control_rotation.hpp      # Velocity command (v, w)
+│   ├── ultrasonic_measurement.hpp# Beam readings + geometry
+│   ├── distributions.hpp         # Normal/Triangular samplers (std::mt19937)
+│   ├── motion_velocity.hpp       # Velocity motion model (Table 5.3)
+│   ├── beam_range_finder_model.hpp # Sensor model + ray-cast
+│   ├── belief_occupancy_grid.hpp # One particle (pose + map + path)
+│   └── fast_slam.hpp             # FastSLAM main loop + resampling
+├── src/
+│   ├── occupancy_grid_map.cpp
+│   ├── beam_range_finder_model.cpp
+│   ├── fast_slam.cpp
+│   └── main.cpp                  # Console runner (optional OpenCV display)
+└── tests/
+    ├── CMakeLists.txt
+    ├── test_motion_model.cpp     # Translations of MotionModelTests.cs
+    ├── test_sensor_model.cpp     # Translations of SensorModelTuningTests.cs
+    └── test_algorithm.cpp        # Translations of AlgorithmFixTests.cs
+```
+
+### Prerequisites (Ubuntu)
+
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake git
+# Optional: live visualisation window
+sudo apt install -y libopencv-dev
+```
+
+Google Test is downloaded automatically by CMake via `FetchContent`; no manual install is needed.
+
+### Build (console runner + tests)
+
+```bash
+cd cpp
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+```
+
+With OpenCV visualisation enabled:
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DWITH_OPENCV=ON
+cmake --build build -j$(nproc)
+```
+
+### Run the unit tests
+
+```bash
+cd cpp/build
+ctest --output-on-failure
+```
+
+Or run the test binary directly (more verbose output):
+
+```bash
+./tests/slam_tests --gtest_color=yes
+```
+
+All 26 tests correspond 1-to-1 with the C# test suite. They cover:
+
+| Suite | Tests | What is verified |
+|---|---|---|
+| `MotionModel` | 10 | Division-by-zero guard, straight-line/arc formulas, continuity at ε, noise wiring |
+| `SensorModelTuning` | 6 | sigmaHit effect on weight ratios, PRand floor, convergence signal |
+| `AlgorithmFix` | 10 | Map-clone isolation, particle count invariant, weight non-negativity, path history, sensor scoring |
+
+### Run the algorithm locally (console)
+
+```bash
+./slam_runner --particles 100 --cells-x 20 --cells-y 20 --cell-size 10 \
+              --v 5 --w 0.1 --z1 80 --z2 80 --iterations 50
+```
+
+Each step prints the highest-weight particle's pose:
+
+```
+Step    1  best particle: x:52.34 cm, y:48.11 cm, theta:6.04 deg  w=3.921e-04
+Step    2  best particle: x:55.12 cm, y:47.88 cm, theta:6.03 deg  w=4.113e-04
+...
+```
+
+Interactive mode (press Enter to step, `q` to quit):
+
+```bash
+./slam_runner --particles 100 --cells-x 20 --cells-y 20
+```
+
+With OpenCV (built with `-DWITH_OPENCV=ON`), a 500×500 window opens showing:
+- **Red dots with heading arrows** — all particles.
+- **Occupancy grid** of the highest-weight particle (black = occupied, white = free, grey = unknown).
+- **Path line** of the highest-weight particle's trajectory.
+
+### Visualization — OS considerations
+
+| Environment | Solution |
+|---|---|
+| **Linux desktop** (Wayland/X11) | Build with `-DWITH_OPENCV=ON`; `imshow` uses GTK or Qt backend |
+| **Headless Linux / SSH** | Console mode only (omit OpenCV flag); pipe output to a file for offline analysis |
+| **ROS2 (Humble / Jazzy)** | Publish `nav_msgs/OccupancyGrid` + `geometry_msgs/PoseArray`; visualize in **RViz2** — no extra GUI code needed |
+| **Windows (native build)** | Keep using the C# Windows Forms visualizer in `UnitTests/RobotWorldForm.cs` |
+
+#### ROS2 node (future work)
+
+Wire the C++ library into a ROS2 package:
+
+```
+ros2_ws/src/slam_node/
+├── CMakeLists.txt          (ament_cmake, links slam library)
+└── src/slam_node.cpp       (rclcpp node)
+    Subscribers:
+      sensor_msgs/msg/Range         → UltraSonicMeasurement
+      geometry_msgs/msg/Twist       → ControlRotation (v, w)
+    Publishers:
+      nav_msgs/msg/OccupancyGrid    → best particle's map
+      geometry_msgs/msg/PoseArray   → all particle poses
+      nav_msgs/msg/Path             → best particle's path
+```
+
+The FastSLAM iteration runs inside the sensor callback (or a timer callback at fixed Hz). RViz2 subscribes to the three publishers and renders the map and particles natively.
+
+---
+
 ## References
 
 - Thrun, S., Burgard, W., & Fox, D. (2005). *Probabilistic Robotics*. MIT Press.  
