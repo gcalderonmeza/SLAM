@@ -107,7 +107,7 @@ namespace Algorithms
 
         public void Initialize()
         {
-            this.measurementModel = new BeamRangeFinderModel(beta: 30, alpha: 10, zHit: 0.5, zShort: 0.5, zMax: 0.5, zRand: 0.5, sigmaHit: 0.5, lambdaShort: 0.5);
+            this.measurementModel = new BeamRangeFinderModel(beta: 30, alpha: 10, zHit: 0.5, zShort: 0.5, zMax: 0.5, zRand: 0.5, sigmaHit: 5.0, lambdaShort: 0.5);
         }
 
         public override string ToString()

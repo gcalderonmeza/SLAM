@@ -58,6 +58,7 @@
     <Compile Include="AlgorithmFixTests.cs" />
     <Compile Include="FastSLAMModel.cs" />
     <Compile Include="MotionModelTests.cs" />
+    <Compile Include="SensorModelTuningTests.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>

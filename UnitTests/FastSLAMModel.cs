@@ -82,9 +82,13 @@ namespace UnitTests
                     dt = 0.5,
                 },
 
-                // TODO: find a good way to estimate these parameters correctly
-                // measurementModel = new BeamRangeFinderModel(beta: 40, alpha: 10, zHit: 25, zShort: 5, zMax: 255, zRand: 50, sigmaHit: 0.25),
-                measurementModel = new BeamRangeFinderModel(beta: 40, alpha: 10, zHit: 0.71, zShort: 0.08, zMax: 0.09, zRand: 0.12, sigmaHit: 0.1294, lambdaShort: 0.5),
+                // sigmaHit is the std-dev (cm) of the Gaussian that scores how well a sensor
+                // reading matches the map-predicted distance. A value of 0.13 cm is far too tight
+                // for a real ultrasonic sensor (HC-SR04 noise is ~1-3 cm): PHit becomes
+                // effectively 0 for any realistic deviation, PRand dominates, all particles get
+                // equal weights, and the filter cannot converge.  Use Learn_intrinsic_parameters()
+                // to calibrate this from real sensor data; 5 cm is a safe starting default.
+                measurementModel = new BeamRangeFinderModel(beta: 40, alpha: 10, zHit: 0.71, zShort: 0.08, zMax: 0.09, zRand: 0.12, sigmaHit: 5.0, lambdaShort: 0.5),
             };
         }
 
