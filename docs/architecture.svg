@@ -1,0 +1,219 @@
+<svg viewBox="0 0 962 644" xmlns="http://www.w3.org/2000/svg"
+     role="img" aria-label="FastSLAM ROS2 system architecture: Computer running SLAM and Control nodes, Visualization section with RViz2 and custom options, Robot with sensor and actuator nodes. Arrows show topic flows between sections.">
+<defs>
+  <style>text { font-family: 'JetBrains Mono', 'Courier New', monospace; }</style>
+  <marker id="m-s" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3z" fill="#0284c7"/></marker>
+  <marker id="m-b" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3z" fill="#7c3aed"/></marker>
+  <marker id="m-c" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3z" fill="#be185d"/></marker>
+  <marker id="m-v" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3z" fill="#9333ea"/></marker>
+  <marker id="m-p" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3z" fill="#94a3b8"/></marker>
+</defs>
+
+<!-- page background -->
+<rect width="962" height="644" fill="#f0f4fa"/>
+
+<!-- ══════════ COMPUTER ══════════ -->
+<rect x="12" y="12" width="420" height="620" rx="12" fill="#f8fafc" stroke="#2563eb" stroke-width="2"/>
+<text x="222" y="36" text-anchor="middle" font-size="11" font-weight="700"
+      letter-spacing="2" fill="#2563eb" font-family="Inter,sans-serif">COMPUTER</text>
+<text x="222" y="52" text-anchor="middle" font-size="9" fill="#64748b">Full OS · Linux / Windows · ROS2 Humble+</text>
+
+<!-- SLAM Node -->
+<rect x="28" y="62" width="388" height="264" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<rect x="28" y="62" width="388" height="28" rx="8" fill="#2563eb"/>
+<rect x="28" y="78" width="388" height="12" fill="#2563eb"/>
+<text x="222" y="79" text-anchor="middle" font-size="11" font-weight="700" fill="white">FastSLAM Node</text>
+<text x="222" y="93" text-anchor="middle" font-size="8.5" fill="#bfdbfe">slam_node · rclcpp::Node  [Algorithm Node]</text>
+
+<text x="44" y="113" font-size="8" font-weight="700" letter-spacing="1.5" fill="#64748b" font-family="Inter,sans-serif">SUBSCRIPTIONS</text>
+<rect x="40" y="119" width="178" height="21" rx="4" fill="#dbeafe" stroke="#0284c7" stroke-width=".8"/>
+<text x="129" y="133" text-anchor="middle" font-size="8.5" fill="#0284c7">/scan  sensor_msgs/Range</text>
+<rect x="226" y="119" width="178" height="21" rx="4" fill="#dbeafe" stroke="#0284c7" stroke-width=".8"/>
+<text x="315" y="133" text-anchor="middle" font-size="8.5" fill="#0284c7">/odom  nav_msgs/Odometry</text>
+
+<text x="44" y="155" font-size="8" font-weight="700" letter-spacing="1.5" fill="#64748b" font-family="Inter,sans-serif">PUBLICATIONS</text>
+<rect x="40" y="161" width="128" height="21" rx="4" fill="#dbeafe" stroke="#7c3aed" stroke-width=".8"/>
+<text x="104" y="175" text-anchor="middle" font-size="8.5" fill="#7c3aed">/best_particle</text>
+<rect x="176" y="161" width="155" height="21" rx="4" fill="#dbeafe" stroke="#9333ea" stroke-width=".8"/>
+<text x="253" y="175" text-anchor="middle" font-size="8.5" fill="#9333ea">/map  OccupancyGrid</text>
+<rect x="339" y="161" width="77" height="21" rx="4" fill="#dbeafe" stroke="#9333ea" stroke-width=".8"/>
+<text x="377" y="175" text-anchor="middle" font-size="8.5" fill="#9333ea">/particles</text>
+<rect x="40" y="188" width="72" height="21" rx="4" fill="#dbeafe" stroke="#9333ea" stroke-width=".8"/>
+<text x="76" y="202" text-anchor="middle" font-size="8.5" fill="#9333ea">/path</text>
+
+<line x1="40" y1="222" x2="404" y2="222" stroke="#cbd5e1" stroke-dasharray="3,3"/>
+<text x="44" y="236" font-size="8" font-weight="700" letter-spacing="1.5" fill="#64748b" font-family="Inter,sans-serif">ALGORITHM INTERNALS</text>
+<rect x="40" y="242" width="106" height="34" rx="4" fill="white" stroke="#cbd5e1"/>
+<text x="93" y="256" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">Motion Model</text>
+<text x="93" y="269" text-anchor="middle" font-size="7.5" fill="#64748b">Thrun Table 5.3</text>
+<rect x="154" y="242" width="112" height="34" rx="4" fill="white" stroke="#cbd5e1"/>
+<text x="210" y="256" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">Sensor Model</text>
+<text x="210" y="269" text-anchor="middle" font-size="7.5" fill="#64748b">BeamRangeFinder</text>
+<rect x="274" y="242" width="130" height="34" rx="4" fill="white" stroke="#cbd5e1"/>
+<text x="339" y="256" text-anchor="middle" font-size="8" font-weight="600" fill="#1e40af">Particle Filter</text>
+<text x="339" y="269" text-anchor="middle" font-size="7.5" fill="#64748b">N × OccupancyGridMap</text>
+
+<!-- SLAM→Control internal arrow -->
+<line x1="222" y1="326" x2="222" y2="338" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#m-b)"/>
+<text x="235" y="335" font-size="8" fill="#7c3aed">/best_particle</text>
+
+<!-- Control Node -->
+<rect x="28" y="338" width="388" height="228" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<rect x="28" y="338" width="388" height="28" rx="8" fill="#7c3aed"/>
+<rect x="28" y="354" width="388" height="12" fill="#7c3aed"/>
+<text x="222" y="355" text-anchor="middle" font-size="11" font-weight="700" fill="white">Control Node</text>
+<text x="222" y="369" text-anchor="middle" font-size="8.5" fill="#ddd6fe">robot_controller · rclcpp::Node  [Algorithm Node]</text>
+
+<text x="44" y="390" font-size="8" font-weight="700" letter-spacing="1.5" fill="#64748b" font-family="Inter,sans-serif">SUBSCRIPTIONS</text>
+<rect x="40" y="396" width="200" height="21" rx="4" fill="#ede9fe" stroke="#7c3aed" stroke-width=".8"/>
+<text x="140" y="410" text-anchor="middle" font-size="8.5" fill="#7c3aed">/best_particle (Pose + map)</text>
+
+<text x="44" y="431" font-size="8" font-weight="700" letter-spacing="1.5" fill="#64748b" font-family="Inter,sans-serif">PUBLICATIONS</text>
+<rect x="40" y="437" width="160" height="21" rx="4" fill="#ede9fe" stroke="#be185d" stroke-width=".8"/>
+<text x="120" y="451" text-anchor="middle" font-size="8.5" fill="#be185d">/cmd_vel  (Twist)</text>
+<rect x="208" y="437" width="205" height="21" rx="4" fill="#ede9fe" stroke="#be185d" stroke-width=".8"/>
+<text x="310" y="451" text-anchor="middle" font-size="8.5" fill="#be185d">/servo_angle · other cmds</text>
+
+<line x1="40" y1="471" x2="404" y2="471" stroke="#cbd5e1" stroke-dasharray="3,3"/>
+<text x="44" y="485" font-size="8" font-weight="700" letter-spacing="1.5" fill="#64748b" font-family="Inter,sans-serif">DECISION LOGIC</text>
+<rect x="40" y="491" width="116" height="32" rx="4" fill="white" stroke="#cbd5e1"/>
+<text x="98" y="511" text-anchor="middle" font-size="8" fill="#4c1d95">Path Planner</text>
+<rect x="164" y="491" width="116" height="32" rx="4" fill="white" stroke="#cbd5e1"/>
+<text x="222" y="511" text-anchor="middle" font-size="8" fill="#4c1d95">Waypoints / Goal</text>
+<rect x="288" y="491" width="116" height="32" rx="4" fill="white" stroke="#cbd5e1"/>
+<text x="346" y="511" text-anchor="middle" font-size="8" fill="#4c1d95">Vel. Controller</text>
+
+<!-- Computer middleware -->
+<rect x="28" y="578" width="388" height="42" rx="6" fill="white" fill-opacity=".6" stroke="#cbd5e1" stroke-dasharray="4,3"/>
+<text x="222" y="596" text-anchor="middle" font-size="8.5" font-weight="600" letter-spacing="1" fill="#64748b" font-family="Inter,sans-serif">ROS2 MIDDLEWARE</text>
+<text x="222" y="611" text-anchor="middle" font-size="8" fill="#64748b">DDS (Fast-DDS) · rclcpp · TF2 · nav2 · micro-ROS Agent</text>
+
+<!-- ══════════ VISUALIZATION (dashed border = optional location) ══════════ -->
+<rect x="446" y="12" width="504" height="294" rx="12"
+      fill="#f8fafc" stroke="#be185d" stroke-width="2" stroke-dasharray="7,4"/>
+<text x="698" y="36" text-anchor="middle" font-size="11" font-weight="700"
+      letter-spacing="2" fill="#be185d" font-family="Inter,sans-serif">VISUALIZATION</text>
+<text x="698" y="52" text-anchor="middle" font-size="9" fill="#64748b">same machine as Algorithm  ·or·  any machine on same ROS2 domain</text>
+
+<!-- RViz2 sub-box (solid border = decoupled) -->
+<rect x="462" y="62" width="226" height="230" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+<rect x="462" y="62" width="226" height="26" rx="8" fill="#db2777"/>
+<rect x="462" y="76" width="226" height="12" fill="#db2777"/>
+<text x="575" y="77" text-anchor="middle" font-size="10" font-weight="700" fill="white">RViz2</text>
+<text x="575" y="91" text-anchor="middle" font-size="8" fill="#fbcfe8">existing ROS2 tool · decoupled</text>
+<text x="478" y="112" font-size="8" font-weight="600" fill="#831843">Subscribes via topics:</text>
+<text x="478" y="127" font-size="7.5" fill="#64748b">/map   nav_msgs/OccupancyGrid</text>
+<text x="478" y="140" font-size="7.5" fill="#64748b">/particles   PoseArray</text>
+<text x="478" y="153" font-size="7.5" fill="#64748b">/path   nav_msgs/Path</text>
+<text x="478" y="166" font-size="7.5" fill="#64748b">/scan   sensor_msgs/Range</text>
+<text x="478" y="179" font-size="7.5" fill="#64748b">TF2 tree  (map → base_link)</text>
+<text x="478" y="200" font-size="8" font-weight="600" fill="#831843">Platform:</text>
+<text x="478" y="214" font-size="7.5" fill="#64748b">Linux · macOS · Windows (WSL)</text>
+<text x="478" y="227" font-size="7.5" fill="#64748b">Any machine on same ROS domain</text>
+<text x="478" y="240" font-size="7.5" fill="#64748b">Separate process from slam_node</text>
+<text x="478" y="277" font-size="7" fill="#db2777" font-style="italic">solid border = decoupled via topics</text>
+
+<!-- Custom sub-box (dashed border = in-process) -->
+<rect x="700" y="62" width="236" height="230" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="1.5" stroke-dasharray="5,3"/>
+<rect x="700" y="62" width="236" height="26" rx="8" fill="#db2777"/>
+<rect x="700" y="76" width="236" height="12" fill="#db2777"/>
+<text x="818" y="77" text-anchor="middle" font-size="10" font-weight="700" fill="white">Custom Built</text>
+<text x="818" y="91" text-anchor="middle" font-size="8" fill="#fbcfe8">in-process · reads memory directly</text>
+<!-- C# sub -->
+<rect x="712" y="98" width="212" height="82" rx="4" fill="white" fill-opacity=".6" stroke="#db2777" stroke-width=".7"/>
+<text x="818" y="113" text-anchor="middle" font-size="8.5" font-weight="600" fill="#831843">C# WinForms</text>
+<text x="718" y="128" font-size="7.5" fill="#64748b">Windows only · original project</text>
+<text x="718" y="141" font-size="7.5" fill="#64748b">500×500 canvas, standalone</text>
+<text x="718" y="154" font-size="7.5" fill="#64748b">No ROS2 required</text>
+<text x="718" y="167" font-size="7.5" fill="#64748b">SlamForm.cs entry point</text>
+<!-- OpenCV sub -->
+<rect x="712" y="188" width="212" height="82" rx="4" fill="white" fill-opacity=".6" stroke="#db2777" stroke-width=".7"/>
+<text x="818" y="203" text-anchor="middle" font-size="8.5" font-weight="600" fill="#831843">OpenCV (slam_runner)</text>
+<text x="718" y="218" font-size="7.5" fill="#64748b">Cross-platform · C++ port</text>
+<text x="718" y="231" font-size="7.5" fill="#64748b">cmake -DWITH_OPENCV=ON</text>
+<text x="718" y="244" font-size="7.5" fill="#64748b">Embedded in slam_runner binary</text>
+<text x="718" y="257" font-size="7.5" fill="#64748b">main.cpp #ifdef WITH_OPENCV</text>
+<text x="818" y="277" text-anchor="middle" font-size="7" fill="#db2777" font-style="italic">dashed border = in-process with slam_runner</text>
+
+<!-- ══════════ ROBOT ══════════ -->
+<rect x="446" y="320" width="504" height="324" rx="12" fill="#f8fafc" stroke="#16a34a" stroke-width="2"/>
+<text x="698" y="343" text-anchor="middle" font-size="11" font-weight="700"
+      letter-spacing="2" fill="#16a34a" font-family="Inter,sans-serif">ROBOT</text>
+<text x="698" y="359" text-anchor="middle" font-size="9" fill="#64748b">Raspberry Pi / Arduino / ESP32 · ROS2 or micro-ROS  [Robot Node]</text>
+
+<!-- Ultrasonic sensor node -->
+<rect x="462" y="368" width="224" height="108" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<rect x="462" y="368" width="224" height="24" rx="8" fill="#d97706"/>
+<rect x="462" y="380" width="224" height="12" fill="#d97706"/>
+<text x="574" y="381" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">Sensor Node</text>
+<text x="574" y="394" text-anchor="middle" font-size="8" fill="#fde68a">ultrasonic_driver</text>
+<text x="478" y="413" font-size="7.5" fill="#64748b">HC-SR04 · GPIO trigger/echo</text>
+<text x="478" y="426" font-size="7.5" fill="#64748b">also: Lidar, camera, IMU…</text>
+<text x="478" y="441" font-size="7.5" font-weight="600" fill="#92400e">publishes  /scan  sensor_msgs/Range</text>
+<text x="478" y="468" font-size="7" fill="#64748b" font-style="italic">extensible to any sensor type</text>
+
+<!-- Encoder sensor node -->
+<rect x="696" y="368" width="238" height="108" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<rect x="696" y="368" width="238" height="24" rx="8" fill="#d97706"/>
+<rect x="696" y="380" width="238" height="12" fill="#d97706"/>
+<text x="815" y="381" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">Sensor Node</text>
+<text x="815" y="394" text-anchor="middle" font-size="8" fill="#fde68a">encoder_driver</text>
+<text x="712" y="413" font-size="7.5" fill="#64748b">Wheel encoders · quadrature count</text>
+<text x="712" y="426" font-size="7.5" fill="#64748b">also: GPS, IMU…</text>
+<text x="712" y="441" font-size="7.5" font-weight="600" fill="#92400e">publishes  /odom  nav_msgs/Odometry</text>
+<text x="712" y="468" font-size="7" fill="#64748b" font-style="italic">extensible to any sensor type</text>
+
+<!-- Motor actuator node -->
+<rect x="462" y="486" width="224" height="88" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<rect x="462" y="486" width="224" height="24" rx="8" fill="#16a34a"/>
+<rect x="462" y="498" width="224" height="12" fill="#16a34a"/>
+<text x="574" y="499" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">Actuator Node</text>
+<text x="574" y="512" text-anchor="middle" font-size="8" fill="#bbf7d0">motor_driver</text>
+<text x="478" y="530" font-size="7.5" fill="#64748b">DC motors · H-bridge · PWM</text>
+<text x="478" y="543" font-size="7.5" font-weight="600" fill="#14532d">subscribes  /cmd_vel  Twist</text>
+<text x="478" y="564" font-size="7" fill="#64748b" font-style="italic">extensible to any actuator type</text>
+
+<!-- Servo actuator node -->
+<rect x="696" y="486" width="238" height="88" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<rect x="696" y="486" width="238" height="24" rx="8" fill="#16a34a"/>
+<rect x="696" y="498" width="238" height="12" fill="#16a34a"/>
+<text x="815" y="499" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">Actuator Node</text>
+<text x="815" y="512" text-anchor="middle" font-size="8" fill="#bbf7d0">servo_driver</text>
+<text x="712" y="530" font-size="7.5" fill="#64748b">Servo motor · sensor sweep / pan-tilt</text>
+<text x="712" y="543" font-size="7.5" font-weight="600" fill="#14532d">subscribes  /servo_angle</text>
+<text x="712" y="564" font-size="7" fill="#64748b" font-style="italic">extensible to any actuator type</text>
+
+<!-- Robot middleware -->
+<rect x="462" y="582" width="472" height="44" rx="6" fill="white" fill-opacity=".5" stroke="#cbd5e1" stroke-dasharray="4,3"/>
+<text x="698" y="600" text-anchor="middle" font-size="8.5" font-weight="600" letter-spacing="1" fill="#64748b" font-family="Inter,sans-serif">ROBOT MIDDLEWARE</text>
+<text x="698" y="616" text-anchor="middle" font-size="8" fill="#64748b">micro-ROS (ESP32 / STM32 / Arduino)  or  rclcpp (Raspberry Pi / Jetson)</text>
+
+<!-- ══════════ ARROWS ══════════ -->
+
+<!-- Sensor → SLAM: /scan · /odom -->
+<line x1="446" y1="422" x2="416" y2="134"
+      stroke="#0284c7" stroke-width="2" marker-end="url(#m-s)" stroke-dasharray="6,3"/>
+<text x="425" y="288" text-anchor="middle" font-size="7.5" fill="#0284c7"
+      transform="rotate(-83 425 288)">/scan · /odom</text>
+
+<!-- SLAM → RViz2: topic arrow -->
+<line x1="416" y1="172" x2="462" y2="172"
+      stroke="#9333ea" stroke-width="2" marker-end="url(#m-v)"/>
+<text x="439" y="166" text-anchor="middle" font-size="7" fill="#9333ea">/map · /particles · /path</text>
+
+<!-- SLAM → Custom: in-process -->
+<line x1="416" y1="198" x2="700" y2="198"
+      stroke="#94a3b8" stroke-width="1.5" marker-end="url(#m-p)" stroke-dasharray="5,3"/>
+<text x="558" y="192" text-anchor="middle" font-size="7" fill="#64748b">same process · reads memory</text>
+
+<!-- Control → Robot: /cmd_vel -->
+<line x1="416" y1="452" x2="446" y2="530"
+      stroke="#be185d" stroke-width="2" marker-end="url(#m-c)" stroke-dasharray="6,3"/>
+<text x="424" y="498" font-size="7.5" fill="#be185d">/cmd_vel</text>
+
+</svg>
