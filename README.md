@@ -181,6 +181,14 @@ Sensor range: `5 cm` (minimum) to `255 cm` (maximum, treated as "no obstacle det
 
 ---
 
+## System Architecture
+
+![FastSLAM ROS2 Node Architecture](docs/architecture.svg)
+
+The diagram shows the three runtime sections and the labeled topic flows between them. The **Visualization** section has a dashed border because it can run on the same machine as the algorithm or on any machine sharing the same ROS2 domain. A solid sub-box border (RViz2) means decoupled via topics; a dashed sub-box border (Custom) means in-process with `slam_runner`.
+
+---
+
 ## C++ Port (ROS2-ready)
 
 A complete C++ port of the algorithm lives in `cpp/`. It compiles as a standalone library and console runner on Linux (Ubuntu 22.04 / 24.04 with ROS2 Humble/Jazzy). The C# Windows Forms visualizer is replaced by optional OpenCV and native ROS2 RViz2 integration.
