@@ -1,3 +1,6 @@
+#ifndef M_PI
+#  define M_PI 3.14159265358979323846
+#endif
 #include "slam/beam_range_finder_model.hpp"
 #include <cmath>
 #include <stdexcept>

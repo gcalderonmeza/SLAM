@@ -1,4 +1,7 @@
 // Translation of UnitTests/SensorModelTuningTests.cs
+#ifndef M_PI
+#  define M_PI 3.14159265358979323846
+#endif
 //
 // Verifies that sigmaHit must be set to a realistic value for the sensor model
 // to drive particle-filter convergence.

@@ -14,7 +14,11 @@ add_executable(slam_tests
     test_algorithm.cpp
 )
 target_link_libraries(slam_tests PRIVATE slam GTest::gtest_main)
-target_compile_options(slam_tests PRIVATE -Wall -Wextra)
+if(MSVC)
+    target_compile_options(slam_tests PRIVATE /W4)
+else()
+    target_compile_options(slam_tests PRIVATE -Wall -Wextra)
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(slam_tests)
