@@ -12,7 +12,11 @@ add_library(slam STATIC
     src/fast_slam.cpp
 )
 target_include_directories(slam PUBLIC include)
-target_compile_options(slam PRIVATE -Wall -Wextra)
+if(MSVC)
+    target_compile_options(slam PRIVATE /W4)
+else()
+    target_compile_options(slam PRIVATE -Wall -Wextra)
+endif()
 
 # ─── Console runner ──────────────────────────────────────────────────────────
 add_executable(slam_runner src/main.cpp)

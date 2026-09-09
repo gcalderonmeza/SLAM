@@ -1,5 +1,8 @@
 // Translation of UnitTests/MotionModelTests.cs
 // Reference: Probabilistic Robotics, Thrun et al., Table 5.3.
+#ifndef M_PI
+#  define M_PI 3.14159265358979323846
+#endif
 
 #include <gtest/gtest.h>
 #include <cmath>

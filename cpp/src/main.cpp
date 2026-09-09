@@ -3,6 +3,11 @@
 // Optional: build with -DWITH_OPENCV=ON to enable a live 500×500 canvas
 // that mirrors the original Windows Forms visualizer.
 
+// M_PI and friends are POSIX extensions; MSVC requires this before <cmath>.
+#ifndef M_PI
+#  define M_PI 3.14159265358979323846
+#endif
+
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -30,7 +35,7 @@ struct Config {
     int    y_cells     = 20;
     double cell_size   = 10.0;   // cm
     double v           = 5.0;    // cm/s
-    double w           = 0.1;    // rad/s
+    double w           = 0.0;    // rad/s
     double z1          = 80.0;   // cm  (left beam at pi/2)
     double z2          = 80.0;   // cm  (right beam at -pi/2)
     int    iterations  = 0;      // 0 = interactive (press Enter)
@@ -123,7 +128,7 @@ static void print_best(const std::vector<BeliefWeightPair>& result, int step) {
     std::cout << "Step " << std::setw(4) << step
               << "  best particle: " << it->grid.pose.to_string()
               << "  w=" << std::scientific << std::setprecision(3) << it->weight
-              << "\n";
+              << "\n" << std::flush;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,9 +201,11 @@ static void draw_frame(const std::vector<BeliefWeightPair>& result,
 int main(int argc, char** argv) {
     Config cfg = parse_args(argc, argv);
 
-    std::cout << "FastSLAM — " << cfg.n_particles << " particles, "
+    std::cout << "FastSLAM - " << cfg.n_particles << " particles, "
               << cfg.x_cells << "x" << cfg.y_cells
               << " grid (" << cfg.cell_size << " cm cells)\n";
+
+    std::cout << std::flush;
 
 #ifdef WITH_OPENCV
     std::cout << "OpenCV visualisation enabled. Press 'q' to quit, any other key to step.\n";
