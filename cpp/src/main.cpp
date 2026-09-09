@@ -31,10 +31,10 @@ using namespace slam;
 // ─────────────────────────────────────────────────────────────────────────────
 struct Config {
     int    n_particles = 50;
-    int    x_cells     = 20;
-    int    y_cells     = 20;
-    double cell_size   = 10.0;   // cm
-    double v           = 5.0;    // cm/s
+    int    x_cells     = 200;
+    int    y_cells     = 200;
+    double cell_size   = 6.0;   // cm
+    double v           = 3.0;    // cm/s
     double w           = 0.0;    // rad/s
     double z1          = 80.0;   // cm  (left beam at pi/2)
     double z2          = 80.0;   // cm  (right beam at -pi/2)
@@ -119,6 +119,50 @@ static FastSLAM make_slam() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Console reporting
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Prints the occupancy grid of the best-weight particle.
+// Legend: x = occupied, (space) = free, . = unknown, R = robot pose, b = border.
+// Rows are printed top-to-bottom (y decreasing), columns left-to-right (x increasing).
+static void print_map(const std::vector<BeliefWeightPair>& result) {
+    auto it = std::max_element(result.begin(), result.end(),
+        [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
+            return a.weight < b.weight;
+        });
+    if (it == result.end()) return;
+
+    const auto& map  = *it->grid.map;
+    const auto& pose = it->grid.pose;
+    const int xc = map.x_cells;
+    const int yc = map.y_cells;
+
+    // Find the robot's cell (col, row).
+    int robot_col = static_cast<int>(std::floor(pose.x / map.cell_size()));
+    int robot_row = static_cast<int>(std::floor(pose.y / map.cell_size()));
+
+    std::cout << "\nFinal map (best particle — " << pose.to_string() << ")\n";
+
+    // Top border.
+    std::cout << std::string(xc + 2, 'b') << "\n";
+
+    for (int row = yc - 1; row >= 0; --row) {
+        std::cout << "b";
+        for (int col = 0; col < xc; ++col) {
+            if (col == robot_col && row == robot_row) {
+                std::cout << "R";
+                continue;
+            }
+            double log_odds = map.m[col + row * xc].occupancy_log_odds;
+            if      (log_odds > 0.0) std::cout << "x";
+            else if (log_odds < 0.0) std::cout << " ";
+            else                     std::cout << ".";
+        }
+        std::cout << "b\n";
+    }
+
+    // Bottom border.
+    std::cout << std::string(xc + 2, 'b') << "\n" << std::flush;
+}
+
 static void print_best(const std::vector<BeliefWeightPair>& result, int step) {
     auto it = std::max_element(result.begin(), result.end(),
         [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
@@ -235,6 +279,7 @@ int main(int argc, char** argv) {
 
     if (cfg.iterations > 0) {
         for (int i = 0; i < cfg.iterations; i++) do_step();
+        print_map(result);
     } else {
         std::cout << "Press Enter to step, 'q' + Enter to quit.\n";
         std::string line;
@@ -249,6 +294,7 @@ int main(int argc, char** argv) {
             if (!line.empty() && line[0] == 'q') break;
 #endif
         }
+        print_map(result);
     }
 
 #ifdef WITH_OPENCV
