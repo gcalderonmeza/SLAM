@@ -71,7 +71,7 @@ std::vector<BeliefWeightPair> FastSLAM::iterate(
         chi_t_bar.push_back(std::move(bwp));
     }
 
-    return sample_prob_distribution(static_cast<int>(chi_t_1.size()), chi_t_bar);
+    return sampler_.resample(static_cast<int>(chi_t_1.size()), chi_t_bar);
 }
 
 std::vector<BeliefWeightPair> FastSLAM::sample_prob_distribution(

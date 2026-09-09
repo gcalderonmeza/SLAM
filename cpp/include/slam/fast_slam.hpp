@@ -45,10 +45,11 @@ public:
 
     FastSLAM() : rng_(std::random_device{}()) {}
 
-    // Seed the resampling RNG (useful in unit tests for determinism).
-    void set_seed(uint32_t seed) { rng_.seed(seed); }
+    // Seed both RNGs for deterministic runs (e.g. unit tests).
+    void set_seed(uint32_t seed) { rng_.seed(seed); sampler_.set_seed(seed + 1); }
 
     // One FastSLAM iteration: propagate → weight → resample.
+    // Resampling uses LowVarianceSampler (Probabilistic Robotics Table 4.4).
     // Input particles (chi_t_1) are never modified.
     std::vector<BeliefWeightPair> iterate(
         const std::vector<BeliefeOccupancyGrid>& chi_t_1,
@@ -57,6 +58,7 @@ public:
 
 private:
     std::mt19937 rng_;
+    LowVarianceSampler sampler_;
 
     // Multinomial resampler: draws N independent uniform samples over the
     // cumulative-weight ladder.
