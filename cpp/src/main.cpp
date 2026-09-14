@@ -125,7 +125,8 @@ static FastSLAM make_slam() {
 // Path: i = initial pose, o = intermediate waypoints, R = final pose.
 // When multiple path poses fall in the same cell the latest one wins.
 // Rows are printed top-to-bottom (y decreasing), columns left-to-right (x increasing).
-static void print_map(const std::vector<BeliefWeightPair>& result) {
+static void print_map(const std::vector<BeliefWeightPair>& result,
+                      const std::vector<slam::Pose>& best_history) {
     auto it = std::max_element(result.begin(), result.end(),
         [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
             return a.weight < b.weight;
@@ -134,22 +135,21 @@ static void print_map(const std::vector<BeliefWeightPair>& result) {
 
     const auto& map  = *it->grid.map;
     const auto& pose = it->grid.pose;
-    const auto& path = it->grid.path;
     const int xc = map.x_cells;
     const int yc = map.y_cells;
     const double cs = map.cell_size();
 
-    // Build a flat cell -> path-character overlay.
-    // Iterate forward so later path entries overwrite earlier ones;
-    // the first pose becomes 'i' and the last becomes 'R'.
+    // Build a flat cell -> path-character overlay from the best-particle history.
+    // Iterate forward so later entries overwrite earlier ones when they share a cell;
+    // the first pose becomes 'i', the last 'R', and all others 'o'.
     std::vector<char> overlay(static_cast<size_t>(xc * yc), '\0');
-    for (size_t p = 0; p < path.size(); ++p) {
-        int col = static_cast<int>(std::floor(path[p].x / cs));
-        int row = static_cast<int>(std::floor(path[p].y / cs));
+    for (size_t p = 0; p < best_history.size(); ++p) {
+        int col = static_cast<int>(std::floor(best_history[p].x / cs));
+        int row = static_cast<int>(std::floor(best_history[p].y / cs));
         if (col < 0 || col >= xc || row < 0 || row >= yc) continue;
-        char ch = (p == 0)             ? 'i'
-                : (p == path.size()-1) ? 'R'
-                :                        'o';
+        char ch = (p == 0)                    ? 'i'
+                : (p == best_history.size()-1) ? 'R'
+                :                               'o';
         overlay[col + row * xc] = ch;
     }
 
@@ -179,12 +179,12 @@ static void print_map(const std::vector<BeliefWeightPair>& result) {
     std::cout << std::string(xc + 2, 'b') << "\n" << std::flush;
 }
 
-static slam::Pose* print_best(const std::vector<BeliefWeightPair>& result, int step) {
+static const slam::Pose* print_best(const std::vector<BeliefWeightPair>& result, int step) {
     auto it = std::max_element(result.begin(), result.end(),
         [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
             return a.weight < b.weight;
         });
-    if (it == result.end()) return NULL;
+    if (it == result.end()) return nullptr;
     std::cout << "Step " << std::setw(4) << step
               << "  best particle: " << it->grid.pose.to_string()
               << "  w=" << std::scientific << std::setprecision(3) << it->weight
@@ -284,6 +284,7 @@ int main(int argc, char** argv) {
     meas.z     = {cfg.z1, cfg.z2};
 
     std::vector<BeliefWeightPair> result;
+    std::vector<slam::Pose> best_history;  // best-particle pose captured each step
     int step = 0;
 
     auto do_step = [&]() {
@@ -291,12 +292,13 @@ int main(int argc, char** argv) {
         particles.clear();
         for (auto& bwp : result) particles.push_back(bwp.grid);
         step++;
-        print_best(result, step);
+        if (const slam::Pose* p = print_best(result, step))
+            best_history.push_back(*p);
     };
 
     if (cfg.iterations > 0) {
         for (int i = 0; i < cfg.iterations; i++) do_step();
-        print_map(result);
+        print_map(result, best_history);
     } else {
         std::cout << "Press Enter to step, 'q' + Enter to quit.\n";
         std::string line;
@@ -311,7 +313,7 @@ int main(int argc, char** argv) {
             if (!line.empty() && line[0] == 'q') break;
 #endif
         }
-        print_map(result);
+        print_map(result, best_history);
     }
 
 #ifdef WITH_OPENCV
