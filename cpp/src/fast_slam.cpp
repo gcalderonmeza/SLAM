@@ -1,7 +1,48 @@
 #include "slam/fast_slam.hpp"
 #include <algorithm>
+#include <numeric>
+#include <stdexcept>
 
 namespace slam {
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LowVarianceSampler — Probabilistic Robotics Table 4.4
+// ─────────────────────────────────────────────────────────────────────────────
+
+std::vector<BeliefWeightPair> LowVarianceSampler::resample(
+    int total_samples,
+    const std::vector<BeliefWeightPair>& chi_t_bar)
+{
+    std::vector<BeliefWeightPair> chi_t;
+    if (chi_t_bar.empty() || total_samples <= 0) return chi_t;
+    chi_t.reserve(total_samples);
+
+    // Normalise weights so they sum to 1.
+    double total = 0.0;
+    for (const auto& p : chi_t_bar) total += p.weight;
+    if (total <= 0.0) {
+        // All weights zero — return uniform sample (filter has collapsed).
+        std::uniform_int_distribution<size_t> ud(0, chi_t_bar.size() - 1);
+        for (int i = 0; i < total_samples; i++)
+            chi_t.push_back(chi_t_bar[ud(rng_)]);
+        return chi_t;
+    }
+
+    const double step = total / static_cast<double>(total_samples);
+    std::uniform_real_distribution<double> dist(0.0, step);
+    double r = dist(rng_);  // single random offset in [0, step)
+
+    double cumulative = chi_t_bar[0].weight;
+    size_t i = 0;
+    for (int m = 0; m < total_samples; m++) {
+        double threshold = r + static_cast<double>(m) * step;
+        while (cumulative < threshold && i + 1 < chi_t_bar.size()) {
+            cumulative += chi_t_bar[++i].weight;
+        }
+        chi_t.push_back(chi_t_bar[i]);
+    }
+    return chi_t;
+}
 
 std::vector<BeliefWeightPair> FastSLAM::iterate(
     const std::vector<BeliefeOccupancyGrid>& chi_t_1,
@@ -30,7 +71,7 @@ std::vector<BeliefWeightPair> FastSLAM::iterate(
         chi_t_bar.push_back(std::move(bwp));
     }
 
-    return sample_prob_distribution(static_cast<int>(chi_t_1.size()), chi_t_bar);
+    return sampler_.resample(static_cast<int>(chi_t_1.size()), chi_t_bar);
 }
 
 std::vector<BeliefWeightPair> FastSLAM::sample_prob_distribution(

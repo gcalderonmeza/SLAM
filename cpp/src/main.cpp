@@ -31,10 +31,10 @@ using namespace slam;
 // ─────────────────────────────────────────────────────────────────────────────
 struct Config {
     int    n_particles = 50;
-    int    x_cells     = 20;
-    int    y_cells     = 20;
-    double cell_size   = 10.0;   // cm
-    double v           = 5.0;    // cm/s
+    int    x_cells     = 200;
+    int    y_cells     = 200;
+    double cell_size   = 6.0;   // cm
+    double v           = 3.0;    // cm/s
     double w           = 0.0;    // rad/s
     double z1          = 80.0;   // cm  (left beam at pi/2)
     double z2          = 80.0;   // cm  (right beam at -pi/2)
@@ -119,16 +119,77 @@ static FastSLAM make_slam() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Console reporting
 // ─────────────────────────────────────────────────────────────────────────────
-static void print_best(const std::vector<BeliefWeightPair>& result, int step) {
+
+// Prints the occupancy grid of the best-weight particle.
+// Legend: x = occupied, (space) = free, . = unknown, b = border.
+// Path: i = initial pose, o = intermediate waypoints, R = final pose.
+// When multiple path poses fall in the same cell the latest one wins.
+// Rows are printed top-to-bottom (y decreasing), columns left-to-right (x increasing).
+static void print_map(const std::vector<BeliefWeightPair>& result,
+                      const std::vector<slam::Pose>& best_history) {
     auto it = std::max_element(result.begin(), result.end(),
         [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
             return a.weight < b.weight;
         });
     if (it == result.end()) return;
+
+    const auto& map  = *it->grid.map;
+    const auto& pose = it->grid.pose;
+    const int xc = map.x_cells;
+    const int yc = map.y_cells;
+    const double cs = map.cell_size();
+
+    // Build a flat cell -> path-character overlay from the best-particle history.
+    // Iterate forward so later entries overwrite earlier ones when they share a cell;
+    // the first pose becomes 'i', the last 'R', and all others 'o'.
+    std::vector<char> overlay(static_cast<size_t>(xc * yc), '\0');
+    for (size_t p = 0; p < best_history.size(); ++p) {
+        int col = static_cast<int>(std::floor(best_history[p].x / cs));
+        int row = static_cast<int>(std::floor(best_history[p].y / cs));
+        if (col < 0 || col >= xc || row < 0 || row >= yc) continue;
+        char ch = (p == 0)                    ? 'i'
+                : (p == best_history.size()-1) ? 'R'
+                :                               'o';
+        overlay[col + row * xc] = ch;
+    }
+
+    std::cout << "\nFinal map (best particle: " << pose.to_string() << ")\n";
+    std::cout << "Path: i=start  o=waypoint  R=end\n";
+
+    // Top border.
+    std::cout << std::string(xc + 2, 'b') << "\n";
+
+    for (int row = yc - 1; row >= 0; --row) {
+        std::cout << "b";
+        for (int col = 0; col < xc; ++col) {
+            char ch = overlay[col + row * xc];
+            if (ch != '\0') {
+                std::cout << ch;
+                continue;
+            }
+            double log_odds = map.m[col + row * xc].occupancy_log_odds;
+            if      (log_odds > 0.0) std::cout << "x";
+            else if (log_odds < 0.0) std::cout << " ";
+            else                     std::cout << ".";
+        }
+        std::cout << "b\n";
+    }
+
+    // Bottom border.
+    std::cout << std::string(xc + 2, 'b') << "\n" << std::flush;
+}
+
+static const slam::Pose* print_best(const std::vector<BeliefWeightPair>& result, int step) {
+    auto it = std::max_element(result.begin(), result.end(),
+        [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
+            return a.weight < b.weight;
+        });
+    if (it == result.end()) return nullptr;
     std::cout << "Step " << std::setw(4) << step
               << "  best particle: " << it->grid.pose.to_string()
               << "  w=" << std::scientific << std::setprecision(3) << it->weight
               << "\n" << std::flush;
+    return &(it->grid.pose);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,6 +284,7 @@ int main(int argc, char** argv) {
     meas.z     = {cfg.z1, cfg.z2};
 
     std::vector<BeliefWeightPair> result;
+    std::vector<slam::Pose> best_history;  // best-particle pose captured each step
     int step = 0;
 
     auto do_step = [&]() {
@@ -230,11 +292,13 @@ int main(int argc, char** argv) {
         particles.clear();
         for (auto& bwp : result) particles.push_back(bwp.grid);
         step++;
-        print_best(result, step);
+        if (const slam::Pose* p = print_best(result, step))
+            best_history.push_back(*p);
     };
 
     if (cfg.iterations > 0) {
         for (int i = 0; i < cfg.iterations; i++) do_step();
+        print_map(result, best_history);
     } else {
         std::cout << "Press Enter to step, 'q' + Enter to quit.\n";
         std::string line;
@@ -249,6 +313,7 @@ int main(int argc, char** argv) {
             if (!line.empty() && line[0] == 'q') break;
 #endif
         }
+        print_map(result, best_history);
     }
 
 #ifdef WITH_OPENCV
