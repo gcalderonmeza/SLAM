@@ -121,7 +121,9 @@ static FastSLAM make_slam() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Prints the occupancy grid of the best-weight particle.
-// Legend: x = occupied, (space) = free, . = unknown, R = robot pose, b = border.
+// Legend: x = occupied, (space) = free, . = unknown, b = border.
+// Path: i = initial pose, o = intermediate waypoints, R = final pose.
+// When multiple path poses fall in the same cell the latest one wins.
 // Rows are printed top-to-bottom (y decreasing), columns left-to-right (x increasing).
 static void print_map(const std::vector<BeliefWeightPair>& result) {
     auto it = std::max_element(result.begin(), result.end(),
@@ -132,14 +134,27 @@ static void print_map(const std::vector<BeliefWeightPair>& result) {
 
     const auto& map  = *it->grid.map;
     const auto& pose = it->grid.pose;
+    const auto& path = it->grid.path;
     const int xc = map.x_cells;
     const int yc = map.y_cells;
+    const double cs = map.cell_size();
 
-    // Find the robot's cell (col, row).
-    int robot_col = static_cast<int>(std::floor(pose.x / map.cell_size()));
-    int robot_row = static_cast<int>(std::floor(pose.y / map.cell_size()));
+    // Build a flat cell -> path-character overlay.
+    // Iterate forward so later path entries overwrite earlier ones;
+    // the first pose becomes 'i' and the last becomes 'R'.
+    std::vector<char> overlay(static_cast<size_t>(xc * yc), '\0');
+    for (size_t p = 0; p < path.size(); ++p) {
+        int col = static_cast<int>(std::floor(path[p].x / cs));
+        int row = static_cast<int>(std::floor(path[p].y / cs));
+        if (col < 0 || col >= xc || row < 0 || row >= yc) continue;
+        char ch = (p == 0)             ? 'i'
+                : (p == path.size()-1) ? 'R'
+                :                        'o';
+        overlay[col + row * xc] = ch;
+    }
 
-    std::cout << "\nFinal map (best particle — " << pose.to_string() << ")\n";
+    std::cout << "\nFinal map (best particle: " << pose.to_string() << ")\n";
+    std::cout << "Path: i=start  o=waypoint  R=end\n";
 
     // Top border.
     std::cout << std::string(xc + 2, 'b') << "\n";
@@ -147,8 +162,9 @@ static void print_map(const std::vector<BeliefWeightPair>& result) {
     for (int row = yc - 1; row >= 0; --row) {
         std::cout << "b";
         for (int col = 0; col < xc; ++col) {
-            if (col == robot_col && row == robot_row) {
-                std::cout << "R";
+            char ch = overlay[col + row * xc];
+            if (ch != '\0') {
+                std::cout << ch;
                 continue;
             }
             double log_odds = map.m[col + row * xc].occupancy_log_odds;
@@ -163,16 +179,17 @@ static void print_map(const std::vector<BeliefWeightPair>& result) {
     std::cout << std::string(xc + 2, 'b') << "\n" << std::flush;
 }
 
-static void print_best(const std::vector<BeliefWeightPair>& result, int step) {
+static slam::Pose* print_best(const std::vector<BeliefWeightPair>& result, int step) {
     auto it = std::max_element(result.begin(), result.end(),
         [](const BeliefWeightPair& a, const BeliefWeightPair& b) {
             return a.weight < b.weight;
         });
-    if (it == result.end()) return;
+    if (it == result.end()) return NULL;
     std::cout << "Step " << std::setw(4) << step
               << "  best particle: " << it->grid.pose.to_string()
               << "  w=" << std::scientific << std::setprecision(3) << it->weight
               << "\n" << std::flush;
+    return &(it->grid.pose);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
