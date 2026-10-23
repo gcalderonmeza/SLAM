@@ -13,6 +13,7 @@ add_executable(slam_tests
     test_sensor_model.cpp
     test_algorithm.cpp
     test_localization.cpp
+    test_map_io.cpp
 )
 target_link_libraries(slam_tests PRIVATE slam GTest::gtest_main)
 if(MSVC)

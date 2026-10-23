@@ -209,19 +209,22 @@ cpp/
 │   ├── beam_range_finder_model.hpp # Sensor model + ray-cast
 │   ├── belief_occupancy_grid.hpp # One particle (pose + map + path)
 │   ├── fast_slam.hpp             # FastSLAM main loop + resampling
-│   └── mc_localization.hpp       # MCLocalization — localization with a fixed map
+│   ├── mc_localization.hpp       # MCLocalization — localization with a fixed map
+│   └── map_io.hpp                # Map save/load (save_map / load_map)
 ├── src/
 │   ├── occupancy_grid_map.cpp
 │   ├── beam_range_finder_model.cpp
 │   ├── fast_slam.cpp
 │   ├── mc_localization.cpp
+│   ├── map_io.cpp
 │   └── main.cpp                  # Console runner (optional OpenCV display)
 └── tests/
     ├── CMakeLists.txt
     ├── test_motion_model.cpp     # Translations of MotionModelTests.cs
     ├── test_sensor_model.cpp     # Translations of SensorModelTuningTests.cs
     ├── test_algorithm.cpp        # Translations of AlgorithmFixTests.cs
-    └── test_localization.cpp     # MCLocalization invariants
+    ├── test_localization.cpp     # MCLocalization invariants
+    └── test_map_io.cpp           # Map I/O round-trip tests
 ```
 
 ### Prerequisites (Ubuntu)
@@ -271,6 +274,7 @@ All tests cover:
 | `SensorModelTuning` | 6 | sigmaHit effect on weight ratios, PRand floor, convergence signal |
 | `AlgorithmFix` | 10 | Map-clone isolation, particle count invariant, weight non-negativity, path history, sensor scoring |
 | `MCLocalization` | 5 | Particle count invariant, non-negative weights, map immutability, correct-pose advantage, weight stability over multiple iterations |
+| `MapIO` | 6 | Round-trip dimensions, cell count, log-odds values, cell geometry; error on missing file or bad path |
 
 ### Run the algorithm locally (console)
 
@@ -292,6 +296,21 @@ Interactive mode (press Enter to step, `q` to quit):
 ```bash
 ./slam_runner --particles 100 --cells-x 20 --cells-y 20
 ```
+
+Save the best particle's map after SLAM:
+
+```bash
+./slam_runner --iterations 300 --save-map my_room.map
+```
+
+Run localization on a previously saved map:
+
+```bash
+./slam_runner --load-map my_room.map --particles 100 --iterations 50 \
+              --v 5 --w 0.0 --z1 80 --z2 80
+```
+
+The `--load-map` flag switches the runner into MCLocalization mode: no map is built, particles carry only pose, and the saved map is shared by reference across all particles and iterations.
 
 With OpenCV (built with `-DWITH_OPENCV=ON`), a 500×500 window opens showing:
 - **Red dots with heading arrows** — all particles.
