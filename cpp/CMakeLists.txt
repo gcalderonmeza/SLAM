@@ -10,6 +10,7 @@ add_library(slam STATIC
     src/occupancy_grid_map.cpp
     src/beam_range_finder_model.cpp
     src/fast_slam.cpp
+    src/mc_localization.cpp
 )
 target_include_directories(slam PUBLIC include)
 if(MSVC)

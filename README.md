@@ -208,17 +208,20 @@ cpp/
 │   ├── motion_velocity.hpp       # Velocity motion model (Table 5.3)
 │   ├── beam_range_finder_model.hpp # Sensor model + ray-cast
 │   ├── belief_occupancy_grid.hpp # One particle (pose + map + path)
-│   └── fast_slam.hpp             # FastSLAM main loop + resampling
+│   ├── fast_slam.hpp             # FastSLAM main loop + resampling
+│   └── mc_localization.hpp       # MCLocalization — localization with a fixed map
 ├── src/
 │   ├── occupancy_grid_map.cpp
 │   ├── beam_range_finder_model.cpp
 │   ├── fast_slam.cpp
+│   ├── mc_localization.cpp
 │   └── main.cpp                  # Console runner (optional OpenCV display)
 └── tests/
     ├── CMakeLists.txt
     ├── test_motion_model.cpp     # Translations of MotionModelTests.cs
     ├── test_sensor_model.cpp     # Translations of SensorModelTuningTests.cs
-    └── test_algorithm.cpp        # Translations of AlgorithmFixTests.cs
+    ├── test_algorithm.cpp        # Translations of AlgorithmFixTests.cs
+    └── test_localization.cpp     # MCLocalization invariants
 ```
 
 ### Prerequisites (Ubuntu)
@@ -260,13 +263,14 @@ Or run the test binary directly (more verbose output):
 ./tests/slam_tests --gtest_color=yes
 ```
 
-All 26 tests correspond 1-to-1 with the C# test suite. They cover:
+All tests cover:
 
 | Suite | Tests | What is verified |
 |---|---|---|
 | `MotionModel` | 10 | Division-by-zero guard, straight-line/arc formulas, continuity at ε, noise wiring |
 | `SensorModelTuning` | 6 | sigmaHit effect on weight ratios, PRand floor, convergence signal |
 | `AlgorithmFix` | 10 | Map-clone isolation, particle count invariant, weight non-negativity, path history, sensor scoring |
+| `MCLocalization` | 5 | Particle count invariant, non-negative weights, map immutability, correct-pose advantage, weight stability over multiple iterations |
 
 ### Run the algorithm locally (console)
 
@@ -302,6 +306,46 @@ With OpenCV (built with `-DWITH_OPENCV=ON`), a 500×500 window opens showing:
 | **Headless Linux / SSH** | Console mode only (omit OpenCV flag); pipe output to a file for offline analysis |
 | **ROS2 (Humble / Jazzy)** | Publish `nav_msgs/OccupancyGrid` + `geometry_msgs/PoseArray`; visualize in **RViz2** — no extra GUI code needed |
 | **Windows (native build)** | Keep using the C# Windows Forms visualizer in `UnitTests/RobotWorldForm.cs` |
+
+### Localization only (MCLocalization)
+
+When a map is already available — e.g. saved from a prior SLAM run — `MCLocalization` localizes the robot within it without modifying the map. This is the standard two-phase workflow in mobile robotics:
+
+1. **Mapping phase** — run `FastSLAM` to build and save the map.
+2. **Localization phase** — load the saved map and run `MCLocalization` for subsequent missions.
+
+Compared to `FastSLAM`, memory drops from **O(N × map)** to **O(map + N)** and convergence is faster because only pose is uncertain.
+
+```cpp
+// Load (or build) a map.
+auto map = std::make_shared<OccupancyGridMap>(cell_size, x_cells, y_cells);
+// ... populate map cells ...
+
+MCLocalization loc(map);
+loc.motion_model      = /* same setup as FastSLAM */;
+loc.measurement_model = /* same setup as FastSLAM */;
+
+// Initial pose distribution — spread over the area if unknown, narrow if approximate.
+std::vector<Pose> poses = /* N random or known poses */;
+
+// Main loop.
+while (running) {
+    auto result = loc.iterate(poses, control, measurement);
+    poses.clear();
+    for (auto& p : result) poses.push_back(p.pose);
+    // result[i].pose   — particle pose hypothesis
+    // result[i].weight — importance weight
+}
+```
+
+The fixed map is shared by reference across all particles and all iterations — `iterate()` never copies or modifies it.
+
+| | `FastSLAM` | `MCLocalization` |
+|---|---|---|
+| Map | Per-particle, built incrementally | One fixed shared map |
+| Output per particle | `BeliefWeightPair` (pose + map + path) | `PoseWeightPair` (pose + weight) |
+| Memory | O(N × map) | O(map + N) |
+| Use case | Unknown environment | Known map, recurring navigation |
 
 #### ROS2 node (future work)
 
