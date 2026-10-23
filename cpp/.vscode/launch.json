@@ -2,11 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Localization slam_runner",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Debug/slam_runner.exe",
+            "args": ["--load-map", "my_room.map", "--iterations", "300"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "CMake Build"
+        },
+        {
             "name": "Debug slam_runner",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Debug/slam_runner.exe",
-            "args": ["--iterations", "300"],
+            "args": ["--iterations", "300", "--save-map", "my_room.map"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

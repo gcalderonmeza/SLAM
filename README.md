@@ -168,6 +168,14 @@ theta = new double[] { Math.PI / 2, -Math.PI / 2 }  // Left and right of robot h
 z     = new double[] { 49, 29 }                       // Distances in cm
 ```
 
+The C++ console runner uses three beams by default:
+
+| Beam | `theta` | Default `z` | Meaning |
+|------|---------|-------------|---------|
+| `--z1` | +π/2 (left) | 80 cm | Left side wall |
+| `--z2` | −π/2 (right) | 80 cm | Right side wall |
+| `--z3` | 0 (front) | 255 cm | Forward — 255 = max range (no obstacle) |
+
 Sensor range: `5 cm` (minimum) to `255 cm` (maximum, treated as "no obstacle detected").
 
 ---
@@ -280,7 +288,7 @@ All tests cover:
 
 ```bash
 ./slam_runner --particles 100 --cells-x 20 --cells-y 20 --cell-size 10 \
-              --v 5 --w 0.1 --z1 80 --z2 80 --iterations 50
+              --v 5 --w 0.1 --z1 80 --z2 80 --z3 255 --iterations 50
 ```
 
 Each step prints the highest-weight particle's pose:

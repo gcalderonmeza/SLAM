@@ -40,6 +40,7 @@ struct Config {
     double w              = 0.0;   // rad/s
     double z1             = 80.0;  // cm  (left beam at pi/2)
     double z2             = 80.0;  // cm  (right beam at -pi/2)
+    double z3             = 255.0; // cm  (front beam at 0) — 255 = max range (no obstacle)
     int    iterations     = 0;     // 0 = interactive (press Enter)
     std::string save_map_path;     // if non-empty, save best map after SLAM
     std::string load_map_path;     // if non-empty, load map and run localization
@@ -56,6 +57,7 @@ static void print_usage(const char* prog) {
         << "  --w F           Angular velocity rad/s      (default 0)\n"
         << "  --z1 F          Left beam reading cm        (default 80)\n"
         << "  --z2 F          Right beam reading cm       (default 80)\n"
+        << "  --z3 F          Front beam reading cm       (default 255 = max range)\n"
         << "  --iterations N  Run N steps then exit       (0 = interactive)\n"
         << "  --save-map FILE Save best-particle map to FILE after SLAM\n"
         << "  --load-map FILE Load map from FILE; run localization instead of SLAM\n";
@@ -76,6 +78,7 @@ static Config parse_args(int argc, char** argv) {
         else if (a == "--w")          cfg.w              = next();
         else if (a == "--z1")         cfg.z1             = next();
         else if (a == "--z2")         cfg.z2             = next();
+        else if (a == "--z3")         cfg.z3             = next();
         else if (a == "--iterations") cfg.iterations     = nexti();
         else if (a == "--save-map")   cfg.save_map_path  = nexts();
         else if (a == "--load-map")   cfg.load_map_path  = nexts();
@@ -335,8 +338,8 @@ int main(int argc, char** argv) {
 
     ControlRotation control{cfg.v, cfg.w};
     UltraSonicMeasurement meas;
-    meas.theta = {M_PI / 2.0, -M_PI / 2.0};  // left and right beams
-    meas.z     = {cfg.z1, cfg.z2};
+    meas.theta = {M_PI / 2.0, -M_PI / 2.0, 0.0};  // left, right, front beams
+    meas.z     = {cfg.z1, cfg.z2, cfg.z3};
 
     // ── Localization mode ────────────────────────────────────────────────────
     if (!cfg.load_map_path.empty()) {

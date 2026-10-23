@@ -411,6 +411,9 @@ FodyWeavers.xsd
 cpp/build/
 cpp/out/
 
+# Saved occupancy grid maps generated at runtime
+*.map
+
 # VS Code files for those working on multiple tools
 .vscode/*
 !.vscode/settings.json
