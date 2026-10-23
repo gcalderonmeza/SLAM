@@ -11,6 +11,7 @@ add_library(slam STATIC
     src/beam_range_finder_model.cpp
     src/fast_slam.cpp
     src/mc_localization.cpp
+    src/map_io.cpp
 )
 target_include_directories(slam PUBLIC include)
 if(MSVC)
